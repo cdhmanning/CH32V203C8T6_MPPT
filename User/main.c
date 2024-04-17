@@ -22,10 +22,10 @@ void gpio_init(void)
     GPIO_InitTypeDef GPIO_InitStructure = {0};
 
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
-    GPIO_InitStructure.GPIO_Pin = LED_PIN;
+    GPIO_InitStructure.GPIO_Pin = LED0_PIN;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(LED_PORT, &GPIO_InitStructure);
+    GPIO_Init(LED0_PORT, &GPIO_InitStructure);
 }
 
 
@@ -47,14 +47,16 @@ int main(void)
 
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
 
-    USART_Printf_Init(115200);
+    USART_Printf_Init(DEBUG_UART_BAUD);
 
     printf("\n\n* * *\n\n"
     	   "PWM Test\n"
     	   "Built: " __DATE__  " " __TIME__ "\n"
-		   "SystemCoreClock:%lu\n", SystemCoreClock);
+		   "SystemCoreClock:%lu\n"
+		   "Debug UART baud:%u\n",
+		   SystemCoreClock, DEBUG_UART_BAUD);
 
-    printf("PWM Test\n");
+
     gpio_init();
     systick_init();
     pwm_init(2048, 0);
@@ -63,7 +65,7 @@ int main(void)
     while(1)
     {
         delay_ms(i & 1 ? 20 : 5);
-        GPIO_WriteBit(LED_IO, (i & 1) ? 1 : 0);
+        GPIO_WriteBit(LED0_IO, (i & 1) ? 1 : 0);
         pwm_val = ( i & 1) ? (2048 * 9000)/75000 : (2048 * 14500)/15000;
         update_pwm(pwm_val);
         i++;

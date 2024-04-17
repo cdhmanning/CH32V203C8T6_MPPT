@@ -12,72 +12,9 @@
  *******************************************************************************/
 #include "debug.h"
 
-static uint8_t  p_us = 0;
-static uint16_t p_ms = 0;
+#include "hw_map.h"
 
-#define DEBUG_DATA0_ADDRESS  ((volatile uint32_t*)0xE0000380)
-#define DEBUG_DATA1_ADDRESS  ((volatile uint32_t*)0xE0000384)
 
-/*********************************************************************
- * @fn      Delay_Init
- *
- * @brief   Initializes Delay Funcation.
- *
- * @return  none
- */
-void Delay_Init(void)
-{
-    p_us = SystemCoreClock / 8000000;
-    p_ms = (uint16_t)p_us * 1000;
-}
-
-/*********************************************************************
- * @fn      Delay_Us
- *
- * @brief   Microsecond Delay Time.
- *
- * @param   n - Microsecond number.
- *
- * @return  None
- */
-void Delay_Us(uint32_t n)
-{
-    uint32_t i;
-
-    SysTick->SR &= ~(1 << 0);
-    i = (uint32_t)n * p_us;
-
-    SysTick->CMP = i;
-    SysTick->CTLR |= (1 << 4);
-    SysTick->CTLR |= (1 << 5) | (1 << 0);
-
-    while((SysTick->SR & (1 << 0)) != (1 << 0));
-    SysTick->CTLR &= ~(1 << 0);
-}
-
-/*********************************************************************
- * @fn      Delay_Ms
- *
- * @brief   Millisecond Delay Time.
- *
- * @param   n - Millisecond number.
- *
- * @return  None
- */
-void Delay_MXXs(uint32_t n)
-{
-    uint32_t i;
-
-    SysTick->SR &= ~(1 << 0);
-    i = (uint32_t)n * p_ms;
-
-    SysTick->CMP = i;
-    SysTick->CTLR |= (1 << 4);
-    SysTick->CTLR |= (1 << 5) | (1 << 0);
-
-    while((SysTick->SR & (1 << 0)) != (1 << 0));
-    SysTick->CTLR &= ~(1 << 0);
-}
 
 /*********************************************************************
  * @fn      USART_Printf_Init
@@ -94,12 +31,13 @@ void USART_Printf_Init(uint32_t baudrate)
     USART_InitTypeDef USART_InitStructure;
 
 #if(DEBUG == DEBUG_UART1)
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1 | RCC_APB2Periph_GPIOA, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
 
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
+    GPIO_InitStructure.GPIO_Pin = DEBUG_UART_PIN;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIO_Init(DEBUG_UART_PORT, &GPIO_InitStructure);
 
 #elif(DEBUG == DEBUG_UART2)
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
@@ -121,6 +59,7 @@ void USART_Printf_Init(uint32_t baudrate)
 
 #endif
 
+
     USART_InitStructure.USART_BaudRate = baudrate;
     USART_InitStructure.USART_WordLength = USART_WordLength_8b;
     USART_InitStructure.USART_StopBits = USART_StopBits_1;
@@ -141,22 +80,6 @@ void USART_Printf_Init(uint32_t baudrate)
     USART_Cmd(USART3, ENABLE);
 
 #endif
-}
-
-/*********************************************************************
- * @fn      SDI_Printf_Enable
- *
- * @brief   Initializes the SDI printf Function.
- *
- * @param   None
- *
- * @return  None
- */
-void SDI_Printf_Enable(void)
-{
-    *(DEBUG_DATA0_ADDRESS) = 0;
-    Delay_Init();
-    Delay_Ms(1);
 }
 
 /*********************************************************************
