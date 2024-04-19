@@ -25,9 +25,9 @@ extern "C" {
 #define DEBUG_UART2    2
 #define DEBUG_UART3    3
 
-/* DEBUG UATR Definition */
-#ifndef DEBUG
-#define DEBUG   DEBUG_UART1
+/* DEBUG UART Definition */
+#ifndef DEBUG_UART_ID
+#define DEBUG_UART_ID   DEBUG_UART3
 #endif
 
 /* SDI Printf Definition */
@@ -38,10 +38,6 @@ extern "C" {
 #define SDI_PRINT   SDI_PR_CLOSE
 #endif
 
-
-void Delay_Init(void);
-void Delay_Us(uint32_t n);
-void Delay_Ms(uint32_t n);
 void USART_Printf_Init(uint32_t baudrate);
 void SDI_Printf_Enable(void);
 

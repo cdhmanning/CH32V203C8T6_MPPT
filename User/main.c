@@ -53,8 +53,8 @@ int main(void)
     	   "PWM Test\n"
     	   "Built: " __DATE__  " " __TIME__ "\n"
 		   "SystemCoreClock:%lu\n"
-		   "Debug UART baud:%u\n",
-		   SystemCoreClock, DEBUG_UART_BAUD);
+		   "Debug UART%d baud:%u\n",
+		   SystemCoreClock, DEBUG_UART_ID, DEBUG_UART_BAUD);
 
 
     gpio_init();
