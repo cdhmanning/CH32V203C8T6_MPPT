@@ -30,16 +30,10 @@ extern "C" {
 #define DEBUG_UART_ID   DEBUG_UART3
 #endif
 
-/* SDI Printf Definition */
-#define SDI_PR_CLOSE   0
-#define SDI_PR_OPEN    1
 
-#ifndef SDI_PRINT
-#define SDI_PRINT   SDI_PR_CLOSE
-#endif
 
 void USART_Printf_Init(uint32_t baudrate);
-void SDI_Printf_Enable(void);
+
 
 #if(DEBUG)
   #define PRINT(format, ...)    printf(format, ##__VA_ARGS__)

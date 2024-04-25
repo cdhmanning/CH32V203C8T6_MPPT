@@ -15,10 +15,6 @@ void pwm_init(uint16_t period, uint16_t prescaler)
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure={0};
 	TIM_BDTRInitTypeDef     TIM_BDTRInitStructure = {0};
 
-	RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOA |
-							RCC_APB2Periph_GPIOB |
-							RCC_APB2Periph_TIM1, ENABLE );
-
 	GPIO_InitStructure.GPIO_Pin = PWM_H_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
