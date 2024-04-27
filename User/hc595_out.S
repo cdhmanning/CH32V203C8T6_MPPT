@@ -31,16 +31,25 @@ void hc595_out(uint8_t val)
 
 #include "hw_map.h"
 
+#define GPIO_SET	0x10
+#define GPIO_CLEAR	0x14
+
 .globl hc595_out
 
-#define nop5	nop; nop; nop; nop; nop
-#define nop10	nop5; nop5
+
+# Define a short delay macro.
+# Note this uses t0
+.macro short_delay n
+	li		t0, \n
+1:	add		t0, t0, -1
+	bne		t0, zero, 1b
+.endm
 
 .text
 
 
  # a0 = val argument
- # t0 = bit
+ # t0 = scratch register: bit, delay_counter
  # t1 = DATA_PORT
  # t2 = DATA_PIN
  # t3 = SERCLK_PORT
@@ -64,35 +73,34 @@ hc595_out:
 
 	li		a1, 8
 
-	sw		t6, 0x14(t5) # GPIO_WriteBit(HC595_OUTCLK_IO, 0);
+	sw		t6, GPIO_CLEAR(t5) # GPIO_WriteBit(HC595_OUTCLK_IO, 0);
 
 loop:
 
-	sw		t4, 0x14(t3) # GPIO_WriteBit(HC595_SERCLK_IO, 0);
+	sw		t4, GPIO_CLEAR(t3) # GPIO_WriteBit(HC595_SERCLK_IO, 0);
 
 	andi	t0, a0, 0x80
 	bne		t0, zero, set_bit
 	sw		t2, 0x14(t1) # GPIO_WriteBit(HC595_DATA_IO, 0);
 	j		end_bit_set
 set_bit:
-	sw		t2, 0x10(t1) # GPIO_WriteBit(HC595_DATA_IO, 1);
+	sw		t2, GPIO_SET(t1) # GPIO_WriteBit(HC595_DATA_IO, 1);
 end_bit_set:
 
 	slli	a0, a0, 1
 	addi 	a1, a1, -1
 
-	nop10
-	nop10
+	short_delay	10
 
-	sw		t4, 0x10(t3) # GPIO_WriteBit(HC595_SERCLK_IO, 1);
+	sw		t4, GPIO_SET(t3) # GPIO_WriteBit(HC595_SERCLK_IO, 1);
 
-	nop10
+	short_delay	5
 
 	bne 	a1, zero, loop
 
-	nop10
+	short_delay	5
 
-	sw		t6, 0x10(t5) # GPIO_WriteBit(HC595_OUTCLK_IO, 1);
+	sw		t6, GPIO_SET(t5) # GPIO_WriteBit(HC595_OUTCLK_IO, 1);
 
 	ret
 

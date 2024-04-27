@@ -24,4 +24,6 @@ uint32_t critical_read(void);
 uint32_t critical_lock(void);
 uint32_t critical_unlock(uint32_t crit_flags);
 
+void critical_test(void);
+
 #endif

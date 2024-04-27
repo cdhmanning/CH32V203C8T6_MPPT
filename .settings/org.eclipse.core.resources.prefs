@@ -3,6 +3,7 @@ encoding//Core/core_riscv.c=GBK
 encoding//Core/core_riscv.h=GBK
 encoding//Core/critical.S=GBK
 encoding//Core/critical.h=GBK
+encoding//Core/critical_test.c=GBK
 encoding//Core/util.c=GBK
 encoding//Debug/debug.c=GBK
 encoding//Debug/debug.h=GBK

@@ -316,3 +316,47 @@ static void PulseEnable(struct hc595_lcd *lcd, uint8_t _data)
 }
 
 
+void lcd_test(struct hc595_lcd *lcd)
+{
+	 /* Clear buffer */
+	  HD44780_Clear(lcd);
+
+	  /* Hide characters */
+	  HD44780_SetDisplayVisible(lcd, 0);
+	  HD44780_SetCursorVisible(lcd, 1);
+	  HD44780_SetCursor(lcd, 0,0);
+	  HD44780_PrintStr(lcd, "HELLO STM32!!!");
+	  HD44780_PrintSpecialChar(lcd, 0);
+
+	  /* Show characters */
+	  HD44780_SetDisplayVisible(lcd, 1);
+
+	  /* Move position */
+	  HD44780_SetCursor(lcd, 0, 1);
+	  HD44780_PrintStr(lcd, "BYE STM32!!!");
+	  HD44780_PrintSpecialChar(lcd, 1);
+	  HD44780_SetCursor(lcd, 0, 2);
+	  HD44780_PrintStr(lcd, "Line 3");
+
+	  HD44780_SetCursor(lcd, 0, 3);
+	  HD44780_PrintStr(lcd, "Line 4-8901234567890");
+	  /* Blink cursor */
+	  HD44780_SetBlink(lcd,1);
+	  HD44780_SetBlink(lcd, 0);
+	  HD44780_SetCursorVisible(lcd, 1);
+	  HD44780_SetCursorVisible(lcd, 0);
+	  HD44780_SetBacklight(lcd,0);
+	  HD44780_SetBacklight(lcd, 1);
+
+	  delay_ms(20);
+	  HD44780_SetCursor(lcd, 0, 0);
+	  HD44780_PrintStr(lcd, "Line 1-Hello on top!");
+	  HD44780_SetCursor(lcd, 0, 1);
+	  HD44780_PrintStr(lcd, "Line 2-ABCDEFGHIJKLM");
+	  HD44780_SetCursor(lcd, 0, 2);
+	  HD44780_PrintStr(lcd, "Line 3-NOPQRSTUVWXYZ");
+	  HD44780_SetCursor(lcd, 0, 3);
+	  HD44780_PrintStr(lcd, "Line 4-8901234567890");
+}
+
+

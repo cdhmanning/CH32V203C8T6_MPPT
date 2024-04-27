@@ -77,10 +77,12 @@ void dma_uart_append(char *buf, int size)
 
 	dma_uart_start();
 
-    while(DMA_GetFlagStatus(DMA1_FLAG_TC2) == 0) {
+#if 1
+	while(DMA_GetFlagStatus(DMA1_FLAG_TC2) == 0) {
     	/* spin */
     }
-    buffer_holding = 0;
+#endif
+	buffer_holding = 0;
 }
 
 __attribute__((used))

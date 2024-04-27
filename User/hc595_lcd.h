@@ -40,5 +40,7 @@ void HD44780_SetBacklight(struct hc595_lcd *lcd, uint8_t new_val);
 void HD44780_LoadCustomCharacter(struct hc595_lcd *lcd, uint8_t char_num, uint8_t *rows);
 void HD44780_PrintStr(struct hc595_lcd *lcd, const char[]);
 
+void lcd_test(struct hc595_lcd *lcd);
+
 #endif
 

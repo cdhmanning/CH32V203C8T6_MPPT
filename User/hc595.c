@@ -43,6 +43,9 @@ void hc595_init(uint8_t val)
  * Shift bits out D7 first, D0 last.
  * NB: Timing is very important. THis has to be slow enough for
  * the 74HC595 at 3V3.
+ *
+ * Note this is a C version. The normal hc595_out is written in assembly
+ * to prevent timing changes with optimisation.
  */
 void hc595_out_C(uint8_t val)
 {
