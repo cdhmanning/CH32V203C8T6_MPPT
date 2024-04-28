@@ -55,16 +55,21 @@ void systick_init(void)
 }
 
 
+static uint32_t loop_counter;
+static uint32_t tick_counter;
 
 void main_poll(void)
 {
-    static uint32_t i = 0;
-    static uint32_t pwm_val;
+	static uint32_t pwm_val;
 
-    pwm_val = ( i & 1) ? (2048 * 9000)/75000 : (2048 * 14500)/15000;
+    pwm_val = ( loop_counter & 1) ? (2048 * 9000)/75000 : (2048 * 14500)/15000;
     update_pwm(pwm_val);
-    hc595_out(i);
-    i++;
+    hc595_out(loop_counter);
+    loop_counter++;
+
+	if (loop_counter & 7)
+		return;
+	printf("%lu\n", loop_counter);
 }
 
 int main(void)
@@ -101,7 +106,7 @@ int main(void)
     }
 }
 
-static uint32_t tick_counter;
+
 
 uint32_t get_tick(void)
 {
@@ -116,7 +121,6 @@ void delay_ms(int n_ms)
 		__WFI();
 	}
 }
-
 
 void ms_poll(void)
 {

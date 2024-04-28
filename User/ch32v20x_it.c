@@ -13,9 +13,12 @@
 
 #include "delay_ms.h"
 
+#include "uart3_dma_handler.h"
+
 void NMI_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void HardFault_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void SysTick_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
+void DMA1_Channel2_IRQHandler(void)__attribute__((interrupt("WCH-Interrupt-fast")));
 
 /*********************************************************************
  * @fn      NMI_Handler
@@ -51,5 +54,10 @@ void SysTick_Handler(void)
     SysTick->SR=0;
 }
 
+
+void DMA1_Channel2_IRQHandler(void)
+{
+	uart3_tx_dma_handler();
+}
 
 
