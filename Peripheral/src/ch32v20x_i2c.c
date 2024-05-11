@@ -775,9 +775,11 @@ void I2C_FastModeDutyCycleConfig(I2C_TypeDef *I2Cx, uint16_t I2C_DutyCycle)
  *
  * @return  ErrorStatus - READY or NoREADY.
  */
+
+uint32_t volatile lastevent = 0;
 ErrorStatus I2C_CheckEvent(I2C_TypeDef *I2Cx, uint32_t I2C_EVENT)
 {
-    uint32_t    lastevent = 0;
+    //uint32_t    lastevent = 0;
     uint32_t    flag1 = 0, flag2 = 0;
     ErrorStatus status = NoREADY;
 
