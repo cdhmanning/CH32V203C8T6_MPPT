@@ -16,9 +16,9 @@ struct i2c_transaction {
 /* Not yet supported. */
 #define I2C_MSG_FLAG_NO_STOP	0x0010
 	uint32_t buffer_length;
-	char *buffer;
+	uint8_t *buffer;
 	uint32_t ext_buffer_length;
-	char *ext_buffer;
+	uint8_t *ext_buffer;
 };
 
 
@@ -26,7 +26,7 @@ struct i2c_if {
 	I2C_TypeDef *interface;
 	struct i2c_transaction *transactions;
 	int n_transactions;
-	char *buffer;
+	uint8_t *buffer;
 	int n_bytes;
 	int stop_sent;
 	int have_bus;
@@ -36,7 +36,5 @@ struct i2c_if {
 int i2c_if_init(struct i2c_if *i2c, I2C_TypeDef *interface);
 
 int i2c_if_transact(struct i2c_if *i2c, struct i2c_transaction * transaction, int n_transactions);
-
-int i2c_if_test(struct i2c_if *i2c);
 
 #endif

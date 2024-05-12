@@ -16,8 +16,9 @@
 /*
  * Debug UART. Output only.
  * 115200, 230400, 460800, 921600
+ * Faster speeds might be lossy.
  */
-#define DEBUG_UART_BAUD	921600
+#define DEBUG_UART_BAUD	115200
 #define DEBUG_UART_PIN  (1<<10)
 #define DEBUG_UART_PORT GPIOB
 #define DEBUG_UART_IO   DEBUG_UART_PORT, DEBUG_UART_PIN

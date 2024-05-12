@@ -47,6 +47,10 @@ int i2c_if_transact(struct i2c_if *i2c,
 {
 	int ret = 0;
 	int ok_transactions = 0;
+	uint8_t dummy;
+
+	(void) dummy;
+
 	if (!i2c)
 		return -1;
 	if (i2c->transactions)
@@ -60,6 +64,9 @@ int i2c_if_transact(struct i2c_if *i2c,
 	i2c->n_transactions = n_transactions;
 	i2c->buffer = 0;
 	i2c->n_bytes = 0;
+
+
+	dummy = I2C_ReceiveData(i2c->interface);
 
 	while(i2c->n_transactions > 0) {
 
@@ -105,6 +112,17 @@ int i2c_if_transact(struct i2c_if *i2c,
 			 * If we don't do this then we get one more read on the wire than we wanted.
 			 */
 			while(i2c->n_bytes > 0) {
+
+				if(i2c->n_bytes == 1) {
+			        GPIO_WriteBit(LED0_IO, 1);
+					//I2C_AcknowledgeConfig(i2c->interface, DISABLE );
+					I2C_GenerateSTOP(i2c->interface, ENABLE );
+			        GPIO_WriteBit(LED0_IO, 0);
+					i2c->stop_sent = 1;
+					i2c->have_bus = 0;
+					//delay_ms(2);
+				}
+
 				ret = wait_flag(i2c, I2C_FLAG_RXNE, 1);
 				if (ret < 0)
 					goto fail;
@@ -115,17 +133,6 @@ int i2c_if_transact(struct i2c_if *i2c,
 
 		        //GPIO_WriteBit(LED0_IO, 0);
 
-				if(i2c->n_bytes == 2) {
-			        GPIO_WriteBit(LED0_IO, 1);
-
-					I2C_GenerateSTOP(i2c->interface, ENABLE );
-			        GPIO_WriteBit(LED0_IO, 0);
-
-					//I2C_AcknowledgeConfig(i2c->interface, DISABLE );
-					i2c->stop_sent = 1;
-					i2c->have_bus = 0;
-					//delay_ms(2);
-				}
 
 				i2c->buffer[0] = I2C_ReceiveData(i2c->interface);
 
@@ -195,50 +202,4 @@ fail:
 	return ok_transactions;
 }
 
-int i2c_if_test(struct i2c_if *i2c)
-{
-	int ret;
-	struct i2c_transaction msg[2];
-	char buffer0[2];
-	char buffer1[2];
-	uint8_t addr = 0x90;
-	uint16_t utemp;
-	int temp;
-
-	(void) ret;
-
-	memset(msg, 0, sizeof(msg));
-
-	buffer0[0] = 0;
-	msg[0].buffer = buffer0;
-	msg[0].buffer_length = 1;
-	msg[0].flags = I2C_MSG_FLAG_WRITE | I2C_MSG_FLAG_NO_STOP;
-	msg[0].dest_addr7 = addr;
-
-	msg[1].buffer = buffer1;
-	msg[1].buffer_length = 2;
-	msg[1].flags = I2C_MSG_FLAG_READ;
-	msg[1].dest_addr7 = addr;
-
-	ret = i2c_if_transact(i2c, msg, 2);
-
-	// byte 0 = MSB
-	// byte 1 = LSB
-	// Least significant 7 bits are discarded.
-	// Sign extend.
-
-	utemp = buffer1[0] << 8 | buffer1[1];
-	utemp >>= 7;
-	if (utemp & (1<<8))
-		utemp |= 0xfe00;
-
-	temp = (int16_t) utemp;
-	temp = temp/2;
-
-	printf("Temp = %d deg C\n", temp);
-
-	delay_ms(100);
-
-	return temp;
-}
 
