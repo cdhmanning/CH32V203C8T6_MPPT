@@ -116,9 +116,19 @@ int main(void)
     USART_Printf_Init(DEBUG_UART_BAUD);
     gpio_init();
     systick_init();
+    printf("\n\n* * *\n\n"
+    	   "PWM Test\n"
+    	   "Built: " __DATE__  " " __TIME__ "\n"
+		   "SystemCoreClock:%lu\n"
+		   "Debug UART%d baud:%u\n",
+		   SystemCoreClock, DEBUG_UART_ID, DEBUG_UART_BAUD);
+    printf( "ChipID:%08lx\r\n", DBGMCU_GetCHIPID() );
+
     IIC_Init(400000, 0x12);
 
     i2c_if_init(&i2c_if1, I2C1);
+    i2c_if_scan_bus(&i2c_if1);
+
     while (1)
     	i2c_lm75_test(&i2c_if1);
 
@@ -128,13 +138,7 @@ int main(void)
 
    // lcd_test(lcd);
 
-    printf("\n\n* * *\n\n"
-    	   "PWM Test\n"
-    	   "Built: " __DATE__  " " __TIME__ "\n"
-		   "SystemCoreClock:%lu\n"
-		   "Debug UART%d baud:%u\n",
-		   SystemCoreClock, DEBUG_UART_ID, DEBUG_UART_BAUD);
-    printf( "ChipID:%08lx\r\n", DBGMCU_GetCHIPID() );
+
 
     pwm_init(2048, 0);
 
@@ -149,7 +153,7 @@ int main(void)
 
 
 
-int32_t get_tick(void)
+uint32_t get_tick(void)
 {
 	return tick_counter;
 }

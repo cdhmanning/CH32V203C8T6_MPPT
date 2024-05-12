@@ -6,7 +6,7 @@
 
 void systick_hook(void);
 
-int32_t get_tick(void);
+uint32_t get_tick(void);
 
 void delay_ms(int n_ms);
 #endif

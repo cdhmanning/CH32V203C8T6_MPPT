@@ -15,11 +15,11 @@ int i2c_if_init(struct i2c_if *i2c, I2C_TypeDef *interface)
 }
 
 
-#define timed_out(start) ((get_tick() - (start)) > 5)
+#define timed_out(start) ((get_tick() - (start)) > 2)
 
 static int wait_flag(struct i2c_if *i2c, uint32_t flag, uint32_t value)
 {
-	int32_t start = get_tick();
+	uint32_t start = get_tick();
 
 	while(I2C_GetFlagStatus( i2c->interface, flag ) != value ) {
 		if (timed_out(start))
@@ -200,6 +200,84 @@ fail:
 	i2c->transactions = NULL;
 
 	return ok_transactions;
+}
+
+
+/* Check bus by sending out a read address and
+ * seeing if there is an ACK.
+ */
+int i2c_if_check(struct i2c_if *i2c, uint8_t addr)
+{
+
+	int ret = 0;
+	uint8_t dummy;
+	uint32_t start;
+
+	(void) dummy;
+
+	if (!i2c)
+		return -1;
+	if (i2c->transactions)
+		return -1; /* Busy */
+
+	dummy = I2C_ReceiveData(i2c->interface);
+	I2C_ClearFlag(i2c->interface,I2C_FLAG_AF);
+
+	ret = wait_flag(i2c, I2C_FLAG_BUSY, 0);
+
+	if (ret < 0)
+			goto fail;
+
+	I2C_GenerateSTART(i2c->interface, 1);
+
+	ret = wait_event(i2c, I2C_EVENT_MASTER_MODE_SELECT);
+
+	if (ret < 0)
+			goto fail;
+
+	I2C_Send7bitAddress(i2c->interface,
+								addr,
+								I2C_Direction_Transmitter);
+
+	start = get_tick();
+
+	while (!timed_out(start)) {
+		/* Acknowledged by device */
+		if (I2C_CheckEvent( i2c->interface, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
+			I2C_GenerateSTOP( I2C1, ENABLE );
+			return 1;
+		}
+		/* Acknowledge failed */
+		if (I2C_GetFlagStatus(i2c->interface,I2C_FLAG_AF)) {
+			I2C_GenerateSTOP( I2C1, ENABLE );
+			return 0;
+		}
+	}
+fail:
+	I2C_GenerateSTOP( I2C1, ENABLE );
+	return -1;
+}
+
+/*
+ * i2c_if_scan_bus()
+ * Scans the bus and prints what devices are seen.
+ */
+int i2c_if_scan_bus(struct i2c_if *i2c)
+{
+	uint8_t i;
+	int n = 0;
+	int result;
+
+	printf("I2C Bus scan\n");
+	for( i = 0x2; i < 0xFE; i+= 2) {
+		result = i2c_if_check(i2c, i);
+		if (result > 0) {
+			printf("Device at 0x%02x\n", i);
+			n++;
+		}
+	}
+	printf("%d i2C devices found\n", n);
+	return n;
 }
 
 

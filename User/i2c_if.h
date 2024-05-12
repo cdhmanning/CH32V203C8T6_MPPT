@@ -37,4 +37,18 @@ int i2c_if_init(struct i2c_if *i2c, I2C_TypeDef *interface);
 
 int i2c_if_transact(struct i2c_if *i2c, struct i2c_transaction * transaction, int n_transactions);
 
+/*
+ * i2c_if_check() checks if there is a device at the specified address.
+ * Returns -1: some sort of failure
+ *          0: no device there
+ *          1: device seen
+ */
+int i2c_if_check(struct i2c_if *i2c, uint8_t addr);
+
+/*
+ * i2c_if_scan_bus()
+ * Scans the bus and prints what devices are seen.
+ */
+int i2c_if_scan_bus(struct i2c_if *i2c);
+
 #endif
