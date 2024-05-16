@@ -1,3 +1,10 @@
+/*
+ * I2C driver that operates in polled mode with time outs.
+ * It would probably be a good idea for the main transaction handler to
+ * check if the AF flag is set (acknowledgement fail) for
+ * detecting if the device is not present/ready.
+ */
+
 #include "i2c_if.h"
 
 #include "hw_map.h"
@@ -66,7 +73,11 @@ int i2c_if_transact(struct i2c_if *i2c,
 	i2c->n_bytes = 0;
 
 
+	/*
+	 * Clear any stale state out.
+	 */
 	dummy = I2C_ReceiveData(i2c->interface);
+	I2C_ClearFlag(i2c->interface,I2C_FLAG_AF);
 
 	while(i2c->n_transactions > 0) {
 
@@ -256,6 +267,139 @@ int i2c_if_check(struct i2c_if *i2c, uint8_t addr)
 fail:
 	I2C_GenerateSTOP( I2C1, ENABLE );
 	return -1;
+}
+
+
+/*
+ * Load a value into a buffer, MSB first.
+ * The buffer is then a big endian value.
+ */
+static void load_buffer_msbf(uint8_t *buffer, uint32_t value, int n_bytes)
+{
+	int i;
+	uint8_t *x;
+
+	x = buffer + n_bytes - 1;
+
+	for(i = 0; i < n_bytes; i++) {
+		*x = value & 0xff;
+		x--;
+		value >>= 8;
+	}
+}
+
+/*
+ * Extract a value from a buffer.
+ * The buffer is a big endian value.
+ */
+static uint32_t buffer_to_u32_msbf(uint8_t *buffer, int n_bytes)
+{
+	int i;
+	uint32_t val;
+
+	val = 0;
+
+	for(i = 0; i < n_bytes; i++) {
+		val <<= 8;
+		val |= *buffer;
+		buffer++;
+	}
+	return val;
+}
+
+int i2c_if_read_reg_buffer(struct i2c_if *i2c, uint8_t dev_addr,
+					uint32_t reg_addr, uint32_t reg_addr_n_bytes,
+					uint8_t *buffer, uint32_t n_bytes)
+{
+	struct i2c_transaction msg[2];
+	uint8_t addr_buffer[4];
+	int ret;
+
+	memset(msg, 0, sizeof(msg));
+	load_buffer_msbf(addr_buffer, reg_addr, reg_addr_n_bytes);
+	msg[0].dest_addr7 = dev_addr;
+	msg[0].flags = I2C_MSG_FLAG_WRITE | I2C_MSG_FLAG_NO_STOP;
+	msg[0].buffer_length = reg_addr_n_bytes;
+	msg[0].buffer = addr_buffer;
+
+	msg[1].dest_addr7 = dev_addr;
+	msg[1].flags = I2C_MSG_FLAG_READ;
+	msg[1].buffer_length = n_bytes;
+	msg[1].buffer = buffer;
+
+	if (reg_addr_n_bytes > 0)
+		ret = i2c_if_transact(i2c, msg, 2);
+	else
+		ret = i2c_if_transact(i2c, &msg[1], 1);
+
+	if (ret < 1)
+		return -1;
+
+	return 0;
+}
+
+int i2c_if_write_reg_buffer(struct i2c_if *i2c,  uint8_t dev_addr,
+					 uint32_t reg_addr, uint32_t reg_addr_n_bytes,
+					 uint8_t *buffer, int n_bytes)
+{
+	struct i2c_transaction msg;
+	uint8_t addr_buffer[4];
+	int ret;
+
+	load_buffer_msbf(addr_buffer, reg_addr, reg_addr_n_bytes);
+	msg.dest_addr7 = dev_addr;
+	msg.flags = I2C_MSG_FLAG_WRITE | I2C_MSG_FLAG_NO_STOP;
+	msg.buffer_length = reg_addr_n_bytes;
+	msg.buffer = addr_buffer;
+	msg.ext_buffer = buffer;
+	msg.ext_buffer_length = n_bytes;
+
+	ret = i2c_if_transact(i2c, &msg, 1);
+
+	if (ret < 1)
+		return -1;
+
+	return 0;
+}
+
+int i2c_if_read_reg(struct i2c_if *i2c, uint8_t dev_addr,
+					uint32_t reg_addr, uint32_t reg_addr_n_bytes,
+					uint32_t *val_out, uint32_t val_out_n_bytes)
+{
+	uint8_t val_buffer[4];
+	uint32_t val;
+	int ret;
+
+	ret = i2c_if_read_reg_buffer(i2c, dev_addr,
+								 reg_addr, reg_addr_n_bytes,
+								 val_buffer, val_out_n_bytes);
+
+	if (ret < 0)
+		return -1;
+	val = buffer_to_u32_msbf(val_buffer, val_out_n_bytes);
+
+	if (val_out)
+		*val_out = val;
+
+	return 0;
+}
+
+int i2c_if_write_reg(struct i2c_if *i2c, uint8_t dev_addr,
+					uint32_t reg_addr, uint32_t reg_addr_n_bytes,
+					uint32_t val, uint32_t val_n_bytes)
+{
+	uint8_t val_buffer[4];
+	int ret;
+
+	load_buffer_msbf(val_buffer, val, val_n_bytes);
+	ret = i2c_if_write_reg_buffer(i2c, dev_addr,
+								 reg_addr, reg_addr_n_bytes,
+								 val_buffer, val_n_bytes);
+
+	if (ret < 0)
+		return -1;
+
+	return 0;
 }
 
 /*

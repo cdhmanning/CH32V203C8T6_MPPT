@@ -37,6 +37,22 @@ int i2c_if_init(struct i2c_if *i2c, I2C_TypeDef *interface);
 
 int i2c_if_transact(struct i2c_if *i2c, struct i2c_transaction * transaction, int n_transactions);
 
+
+int i2c_if_read_reg_buffer(struct i2c_if *i2c, uint8_t dev_addr,
+					uint32_t reg_addr, uint32_t reg_addr_n_bytes,
+					uint8_t *buffer, uint32_t n_bytes);
+
+int i2c_if_write_reg_buffer(struct i2c_if *i2c,  uint8_t dev_addr,
+					 uint32_t reg_addr, uint32_t reg_addr_n_bytes,
+					 uint8_t *buffer, int n_bytes);
+
+int i2c_if_read_reg(struct i2c_if *i2c, uint8_t dev_addr,
+				    uint32_t reg_addr, uint32_t reg_addr_n_bytes,
+					uint32_t *val_out, uint32_t val_out_n_bytes);
+int i2c_if_write_reg(struct i2c_if *i2c, uint8_t dev_addr,
+					 uint32_t reg_addr, uint32_t reg_addr_n_bytes,
+					 uint32_t val, uint32_t val_n_bytes);
+
 /*
  * i2c_if_check() checks if there is a device at the specified address.
  * Returns -1: some sort of failure

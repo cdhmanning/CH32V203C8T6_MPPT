@@ -16,6 +16,7 @@
 
 #include "i2c_if.h"
 #include "i2c_lm75.h"
+#include "i2c_24c256.h"
 
 #include "main.h"
 
@@ -129,8 +130,9 @@ int main(void)
     i2c_if_init(&i2c_if1, I2C1);
     i2c_if_scan_bus(&i2c_if1);
 
-    while (1)
-    	i2c_lm75_test(&i2c_if1);
+    i2c_24c256_test(&i2c_if1);
+
+    //i2c_lm75_test(&i2c_if1);
 
     hc595_init(0x55);
 
@@ -139,6 +141,7 @@ int main(void)
    // lcd_test(lcd);
 
 
+    while(1);
 
     pwm_init(2048, 0);
 
