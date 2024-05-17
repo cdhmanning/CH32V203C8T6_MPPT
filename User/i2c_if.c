@@ -152,7 +152,13 @@ int i2c_if_transact(struct i2c_if *i2c,
 			}
 
 		} else {
-			/* Write mode */
+			/* Write mode
+			 * There are two buffers to write,
+			 * buffer: the first buffer
+			 * ext_buffer: the second buffer
+			 * One or both of those buffers might be empty, in which case
+			 * that needs to be handled.
+			 */
 			I2C_Send7bitAddress(i2c->interface,
 								i2c->transactions->dest_addr7,
 								I2C_Direction_Transmitter);
@@ -165,25 +171,46 @@ int i2c_if_transact(struct i2c_if *i2c,
 			if (ret < 0)
 				goto fail;
 			got_to |= 0x20;
-			while(i2c->n_bytes > 0) {
 
-				wait_flag(i2c, I2C_FLAG_TXE, 1);
-				if (ret < 0)
-					goto fail;
-				got_to |= 0x40;
-
-				I2C_SendData(i2c->interface, i2c->buffer[0]);
-
-				i2c->n_bytes--;
-				i2c->buffer++;
-
+			/*
+			 * If there is something in the buffers to send, then send it.
+			 */
+			if (i2c->n_bytes > 0 || i2c->transactions->ext_buffer_length) {
+				/*
+				 * If the first buffer is empty (eg. chip does not have a
+				 * register address) then skip to the second buffer.
+				 */
 				if(i2c->n_bytes == 0 && !i2c->ext_buffer_loaded) {
 					i2c->buffer = i2c->transactions->ext_buffer;
 					i2c->n_bytes = i2c->transactions->ext_buffer_length;
 					i2c->ext_buffer_loaded = 1;
 				}
+
+				while(i2c->n_bytes > 0) {
+
+					wait_flag(i2c, I2C_FLAG_TXE, 1);
+					if (ret < 0)
+						goto fail;
+					got_to |= 0x40;
+
+					I2C_SendData(i2c->interface, i2c->buffer[0]);
+
+					i2c->n_bytes--;
+					i2c->buffer++;
+
+					/*
+					 * If we've done with the first buffer, then set up the
+					 * second buffer.
+					 */
+					if(i2c->n_bytes == 0 && !i2c->ext_buffer_loaded) {
+						i2c->buffer = i2c->transactions->ext_buffer;
+						i2c->n_bytes = i2c->transactions->ext_buffer_length;
+						i2c->ext_buffer_loaded = 1;
+					}
+				}
+				ret = wait_event(i2c, I2C_EVENT_MASTER_BYTE_TRANSMITTED) ;
 			}
-			ret = wait_event(i2c, I2C_EVENT_MASTER_BYTE_TRANSMITTED) ;
+
 			if (ret < 0)
 				goto fail;
 			got_to |= 0x80;
@@ -349,8 +376,8 @@ int i2c_if_write_reg_buffer(struct i2c_if *i2c,  uint8_t dev_addr,
 	load_buffer_msbf(addr_buffer, reg_addr, reg_addr_n_bytes);
 	msg.dest_addr7 = dev_addr;
 	msg.flags = I2C_MSG_FLAG_WRITE | I2C_MSG_FLAG_NO_STOP;
-	msg.buffer_length = reg_addr_n_bytes;
 	msg.buffer = addr_buffer;
+	msg.buffer_length = reg_addr_n_bytes;
 	msg.ext_buffer = buffer;
 	msg.ext_buffer_length = n_bytes;
 
