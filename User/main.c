@@ -5,6 +5,7 @@
 #include "hw_map.h"
 
 #include <critical.h>
+#include <i2c_at24c256.h>
 
 #include "pwm_controller.h"
 #include "hc595.h"
@@ -16,8 +17,6 @@
 
 #include "i2c_if.h"
 #include "i2c_lm75.h"
-#include "i2c_24c256.h"
-
 #include "main.h"
 
 #include "debug.h"
@@ -130,7 +129,7 @@ int main(void)
     i2c_if_init(&i2c_if1, I2C1);
     i2c_if_scan_bus(&i2c_if1);
 
-    i2c_24c256_test(&i2c_if1);
+    i2c_at24c256_test(&i2c_if1);
 
     //i2c_lm75_test(&i2c_if1);
 
