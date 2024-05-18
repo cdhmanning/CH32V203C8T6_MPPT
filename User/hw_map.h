@@ -55,5 +55,14 @@
 #define HC595_OUTCLK_PORT GPIOB
 #define HC595_OUTCLK_IO   HC595_OUTCLK_PORT, HC595_OUTCLK_PIN
 
+/*
+ * I2C1 pins
+ */
+
+#define I2C1_SCL_PIN		(1<<6)
+#define I2C1_SCL_PORT	GPIOB
+
+#define I2C1_SDA_PIN		(1<<7)
+#define I2C1_SDA_PORT	GPIOB
 
 #endif

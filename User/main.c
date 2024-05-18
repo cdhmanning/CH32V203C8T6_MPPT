@@ -55,18 +55,18 @@ void IIC_Init(u32 bound, u16 address)
 	I2C_InitTypeDef I2C_InitTSturcture={0};
 
 	RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO, ENABLE );
-	GPIO_PinRemapConfig(GPIO_Remap_I2C1, ENABLE);
+	//GPIO_PinRemapConfig(GPIO_Remap_I2C1, ENABLE);
 	RCC_APB1PeriphClockCmd( RCC_APB1Periph_I2C1, ENABLE );
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
+	GPIO_InitStructure.GPIO_Pin = I2C1_SCL_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init( GPIOB, &GPIO_InitStructure );
+	GPIO_Init(I2C1_SCL_PORT, &GPIO_InitStructure );
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
+	GPIO_InitStructure.GPIO_Pin = I2C1_SDA_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init( GPIOB, &GPIO_InitStructure );
+	GPIO_Init(I2C1_SDA_PORT, &GPIO_InitStructure );
 
 	I2C_InitTSturcture.I2C_ClockSpeed = bound;
 	I2C_InitTSturcture.I2C_Mode = I2C_Mode_I2C;
