@@ -78,7 +78,7 @@ int i2c_lm75_read(struct i2c_lm75 *lm75, int *out_val_mdeg)
 	if (out_val_mdeg)
 		*out_val_mdeg = -1;
 
-	ret  = i2c_if_read_reg(lm75->i2c, 0x90, 0, 1, &utemp, 2);
+	ret  = i2c_if_read_reg(lm75->i2c, lm75->address, 0, 1, &utemp, 2);
 
 	temp = (int16_t) utemp;
 	temp >>= 7;
