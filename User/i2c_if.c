@@ -241,62 +241,6 @@ fail:
 }
 
 
-/* Check bus by sending out a read address and
- * seeing if there is an ACK.
- */
-int i2c_if_check(struct i2c_if *i2c, uint8_t addr)
-{
-
-	int ret = 0;
-	uint8_t dummy;
-	uint32_t start;
-
-	(void) dummy;
-
-	if (!i2c)
-		return -1;
-	if (i2c->transactions)
-		return -1; /* Busy */
-
-	dummy = I2C_ReceiveData(i2c->interface);
-	I2C_ClearFlag(i2c->interface,I2C_FLAG_AF);
-
-	ret = wait_flag(i2c, I2C_FLAG_BUSY, 0);
-
-	if (ret < 0)
-			goto fail;
-
-	I2C_GenerateSTART(i2c->interface, 1);
-
-	ret = wait_event(i2c, I2C_EVENT_MASTER_MODE_SELECT);
-
-	if (ret < 0)
-			goto fail;
-
-	I2C_Send7bitAddress(i2c->interface,
-								addr,
-								I2C_Direction_Transmitter);
-
-	start = get_tick();
-
-	while (!timed_out(start)) {
-		/* Acknowledged by device */
-		if (I2C_CheckEvent( i2c->interface, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
-			I2C_GenerateSTOP( I2C1, ENABLE );
-			return 1;
-		}
-		/* Acknowledge failed */
-		if (I2C_GetFlagStatus(i2c->interface,I2C_FLAG_AF)) {
-			I2C_GenerateSTOP( I2C1, ENABLE );
-			return 0;
-		}
-	}
-fail:
-	I2C_GenerateSTOP( I2C1, ENABLE );
-	return -1;
-}
-
-
 /*
  * Load a value into a buffer, MSB first.
  * The buffer is then a big endian value.
@@ -428,6 +372,70 @@ int i2c_if_write_reg(struct i2c_if *i2c, uint8_t dev_addr,
 
 	return 0;
 }
+
+
+
+/* Check bus by sending out a read address and
+ * seeing if there is an ACK.
+ */
+#if 1
+int i2c_if_check(struct i2c_if *i2c, uint8_t addr)
+{
+
+	int ret = 0;
+	uint8_t dummy;
+	uint32_t start;
+
+	(void) dummy;
+
+	if (!i2c)
+		return -1;
+	if (i2c->transactions)
+		return -1; /* Busy */
+
+	dummy = I2C_ReceiveData(i2c->interface);
+	I2C_ClearFlag(i2c->interface,I2C_FLAG_AF);
+
+	ret = wait_flag(i2c, I2C_FLAG_BUSY, 0);
+
+	if (ret < 0)
+			goto fail;
+
+	I2C_GenerateSTART(i2c->interface, 1);
+
+	ret = wait_event(i2c, I2C_EVENT_MASTER_MODE_SELECT);
+
+	if (ret < 0)
+			goto fail;
+
+	I2C_Send7bitAddress(i2c->interface,
+								addr,
+								I2C_Direction_Transmitter);
+
+	start = get_tick();
+
+	while (!timed_out(start)) {
+		/* Acknowledged by device */
+		if (I2C_CheckEvent( i2c->interface, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
+			I2C_GenerateSTOP( I2C1, ENABLE );
+			return 1;
+		}
+		/* Acknowledge failed */
+		if (I2C_GetFlagStatus(i2c->interface,I2C_FLAG_AF)) {
+			I2C_GenerateSTOP( I2C1, ENABLE );
+			return 0;
+		}
+	}
+fail:
+	I2C_GenerateSTOP( I2C1, ENABLE );
+	return -1;
+}
+#else
+int i2c_if_check(struct i2c_if *i2c, uint8_t addr)
+{
+	return i2c_if_read_reg(i2c, addr, 0, 0, 0, 0);
+}
+#endif
 
 /*
  * i2c_if_scan_bus()
