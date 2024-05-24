@@ -1,12 +1,12 @@
 
 
-#include <i2c_at24c256.h>
+#include "i2c_device/at24c256.h"
 #include "delay_ms.h"
 
 #include <string.h>
 
 
-int i2c_at24c256_init(struct i2c_at24c256 *dev, struct i2c_if *i2c, uint8_t address)
+int at24c256_init(struct at24c256 *dev, struct i2c_if *i2c, uint8_t address)
 {
 	memset(dev, 0, sizeof(*dev));
 	dev->i2c = i2c;
@@ -16,7 +16,7 @@ int i2c_at24c256_init(struct i2c_at24c256 *dev, struct i2c_if *i2c, uint8_t addr
 }
 
 #define PAGE_SIZE 64
-int i2c_at24c256_write_buffer(struct i2c_at24c256 *dev, uint32_t address,
+int at24c256_write_buffer(struct at24c256 *dev, uint32_t address,
 							uint8_t *buffer, int n_bytes)
 {
 	int this_write;
@@ -47,7 +47,7 @@ int i2c_at24c256_write_buffer(struct i2c_at24c256 *dev, uint32_t address,
 	return ret;
 }
 
-int i2c_at24c256_read_buffer(struct i2c_at24c256 *dev, uint32_t address,
+int at24c256_read_buffer(struct at24c256 *dev, uint32_t address,
 							uint8_t *buffer, int n_bytes)
 {
 
@@ -65,9 +65,9 @@ void dump_buffer(uint8_t *buffer, int size)
 	}
 }
 
-int i2c_at24c256_test(struct i2c_if *i2c)
+int at24c256_test(struct i2c_if *i2c)
 {
-	struct i2c_at24c256 dev;
+	struct at24c256 dev;
 	int ret;
 	int i;
 	uint32_t addr;
@@ -75,7 +75,7 @@ int i2c_at24c256_test(struct i2c_if *i2c)
 	uint8_t rb[64];
 
 
-	ret = i2c_at24c256_init(&dev, i2c, 0xa0);
+	ret = at24c256_init(&dev, i2c, 0xa0);
 
 
 	printf("24c256 init returned %d\n", ret);
@@ -114,7 +114,7 @@ int i2c_at24c256_test(struct i2c_if *i2c)
 	}
 
 	printf("Writing 4000 bytes\n");
-	i2c_at24c256_write_buffer(&dev, 1000, (uint8_t *)i2c_at24c256_test, 4000);
+	at24c256_write_buffer(&dev, 1000, (uint8_t *)at24c256_test, 4000);
 
 	printf("Test done\n");
 

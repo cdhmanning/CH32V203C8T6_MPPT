@@ -49,8 +49,8 @@ static int wait_event(struct i2c_if *i2c, uint32_t event)
 volatile uint32_t got_to;
 
 int i2c_if_transact(struct i2c_if *i2c,
-					struct i2c_transaction *transactions,
-					int n_transactions)
+					struct i2c_msg *msgs,
+					int n_msgs)
 {
 	int ret = 0;
 	int ok_transactions = 0;
@@ -60,15 +60,15 @@ int i2c_if_transact(struct i2c_if *i2c,
 
 	if (!i2c)
 		return -1;
-	if (i2c->transactions)
+	if (i2c->msgs)
 		return -1; /* Busy */
-	if (!transactions)
+	if (!msgs)
 		return -1;
-	if (n_transactions < 1)
+	if (n_msgs < 1)
 		return -1;
 
-	i2c->transactions = transactions;
-	i2c->n_transactions = n_transactions;
+	i2c->msgs = msgs;
+	i2c->n_msgs = n_msgs;
 	i2c->buffer = 0;
 	i2c->n_bytes = 0;
 
@@ -79,10 +79,10 @@ int i2c_if_transact(struct i2c_if *i2c,
 	dummy = I2C_ReceiveData(i2c->interface);
 	I2C_ClearFlag(i2c->interface,I2C_FLAG_AF);
 
-	while(i2c->n_transactions > 0) {
+	while(i2c->n_msgs > 0) {
 
-		i2c->buffer = i2c->transactions->buffer;
-		i2c->n_bytes = i2c->transactions->buffer_length;
+		i2c->buffer = i2c->msgs->buffer;
+		i2c->n_bytes = i2c->msgs->buffer_length;
 		i2c->stop_sent = 0;
 		i2c->ext_buffer_loaded = 0;
 
@@ -104,10 +104,10 @@ int i2c_if_transact(struct i2c_if *i2c,
 
 		i2c->have_bus = 1;
 
-		if (i2c->transactions->flags & I2C_MSG_FLAG_READ) {
+		if (i2c->msgs->flags & I2C_MSG_FLAG_READ) {
 			/* Read mode */
 			I2C_Send7bitAddress(i2c->interface,
-								i2c->transactions->dest_addr7,
+								i2c->msgs->dest_addr7,
 								I2C_Direction_Receiver);
 
 			//delay_ms(10);
@@ -160,7 +160,7 @@ int i2c_if_transact(struct i2c_if *i2c,
 			 * that needs to be handled.
 			 */
 			I2C_Send7bitAddress(i2c->interface,
-								i2c->transactions->dest_addr7,
+								i2c->msgs->dest_addr7,
 								I2C_Direction_Transmitter);
 			//delay_ms(10);
 
@@ -175,14 +175,14 @@ int i2c_if_transact(struct i2c_if *i2c,
 			/*
 			 * If there is something in the buffers to send, then send it.
 			 */
-			if (i2c->n_bytes > 0 || i2c->transactions->ext_buffer_length) {
+			if (i2c->n_bytes > 0 || i2c->msgs->ext_buffer_length) {
 				/*
 				 * If the first buffer is empty (eg. chip does not have a
 				 * register address) then skip to the second buffer.
 				 */
 				if(i2c->n_bytes == 0 && !i2c->ext_buffer_loaded) {
-					i2c->buffer = i2c->transactions->ext_buffer;
-					i2c->n_bytes = i2c->transactions->ext_buffer_length;
+					i2c->buffer = i2c->msgs->ext_buffer;
+					i2c->n_bytes = i2c->msgs->ext_buffer_length;
 					i2c->ext_buffer_loaded = 1;
 				}
 
@@ -203,8 +203,8 @@ int i2c_if_transact(struct i2c_if *i2c,
 					 * second buffer.
 					 */
 					if(i2c->n_bytes == 0 && !i2c->ext_buffer_loaded) {
-						i2c->buffer = i2c->transactions->ext_buffer;
-						i2c->n_bytes = i2c->transactions->ext_buffer_length;
+						i2c->buffer = i2c->msgs->ext_buffer;
+						i2c->n_bytes = i2c->msgs->ext_buffer_length;
 						i2c->ext_buffer_loaded = 1;
 					}
 				}
@@ -216,15 +216,15 @@ int i2c_if_transact(struct i2c_if *i2c,
 			got_to |= 0x80;
 
 			if(i2c->stop_sent == 0 &&
-			  !(i2c->transactions->flags &I2C_MSG_FLAG_NO_STOP)) {
+			  !(i2c->msgs->flags &I2C_MSG_FLAG_NO_STOP)) {
 				I2C_GenerateSTOP(i2c->interface, ENABLE );
 				i2c->stop_sent = 1;
 				i2c->have_bus = 0;
 			}
 		}
 
-		i2c->transactions++;
-		i2c->n_transactions--;
+		i2c->msgs++;
+		i2c->n_msgs--;
 		ok_transactions++;
 	}
 
@@ -235,7 +235,7 @@ fail:
 		i2c->stop_sent = 1;
 	}
 
-	i2c->transactions = NULL;
+	i2c->msgs = NULL;
 
 	return ok_transactions;
 }
@@ -282,7 +282,7 @@ int i2c_if_read_reg_buffer(struct i2c_if *i2c, uint8_t dev_addr,
 					uint32_t reg_addr, uint32_t reg_addr_n_bytes,
 					uint8_t *buffer, uint32_t n_bytes)
 {
-	struct i2c_transaction msg[2];
+	struct i2c_msg msg[2];
 	uint8_t addr_buffer[4];
 	int ret;
 
@@ -313,7 +313,7 @@ int i2c_if_write_reg_buffer(struct i2c_if *i2c,  uint8_t dev_addr,
 					 uint32_t reg_addr, uint32_t reg_addr_n_bytes,
 					 uint8_t *buffer, int n_bytes)
 {
-	struct i2c_transaction msg;
+	struct i2c_msg msg;
 	uint8_t addr_buffer[4];
 	int ret;
 
@@ -390,7 +390,7 @@ int i2c_if_check(struct i2c_if *i2c, uint8_t addr)
 
 	if (!i2c)
 		return -1;
-	if (i2c->transactions)
+	if (i2c->msgs)
 		return -1; /* Busy */
 
 	dummy = I2C_ReceiveData(i2c->interface);

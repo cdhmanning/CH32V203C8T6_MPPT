@@ -1,10 +1,10 @@
 
 
-#include "i2c_lm75.h"
+#include "i2c_device/lm75.h"
 #include <string.h>
 
 
-int i2c_lm75_init(struct i2c_lm75 *lm75, struct i2c_if *i2c, uint8_t address)
+int lm75_init(struct lm75 *lm75, struct i2c_if *i2c, uint8_t address)
 {
 	memset(lm75, 0, sizeof(*lm75));
 	lm75->i2c = i2c;
@@ -25,7 +25,7 @@ int i2c_lm75_init(struct i2c_lm75 *lm75, struct i2c_if *i2c, uint8_t address)
 
 
 #if 0
-int i2c_lm75_read(struct i2c_lm75 *lm75, int *out_val_mdeg)
+int lm75_read(struct lm75 *lm75, int *out_val_mdeg)
 {
 	int ret;
 	uint16_t utemp;
@@ -69,7 +69,7 @@ int i2c_lm75_read(struct i2c_lm75 *lm75, int *out_val_mdeg)
 
 #else
 
-int i2c_lm75_read(struct i2c_lm75 *lm75, int *out_val_mdeg)
+int lm75_read(struct lm75 *lm75, int *out_val_mdeg)
 {
 	int ret;
 	uint32_t utemp;
@@ -95,23 +95,23 @@ int i2c_lm75_read(struct i2c_lm75 *lm75, int *out_val_mdeg)
 #endif
 
 
-int i2c_lm75_test(struct i2c_if *i2c)
+int lm75_test(struct i2c_if *i2c)
 {
-	struct i2c_lm75 lm75;
-	struct i2c_lm75 bad;
+	struct lm75 lm75;
+	struct lm75 bad;
 	int ret;
 	int temp_mdeg;
 	int i;
 
-	ret = i2c_lm75_init(&bad, i2c, 0x98);
-	ret = i2c_lm75_init(&lm75, i2c, 0x90);
+	ret = lm75_init(&bad, i2c, 0x98);
+	ret = lm75_init(&lm75, i2c, 0x90);
 
 	printf("LM75 init returned %d\n", ret);
 
 	for(i = 0; i < 100; i++) {
-		ret = i2c_lm75_read(&lm75, &temp_mdeg);
+		ret = lm75_read(&lm75, &temp_mdeg);
 		printf("LM75 read ret %d, %d mdegrees\n", ret, temp_mdeg);
-		//ret = i2c_lm75_read(&bad, &temp_mdeg);
+		//ret = lm75_read(&bad, &temp_mdeg);
 		//printf("Bad LM75 read ret %d, %d mdegrees\n", ret, temp_mdeg);
 	}
 

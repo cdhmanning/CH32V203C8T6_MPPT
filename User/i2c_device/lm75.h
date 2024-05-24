@@ -4,7 +4,7 @@
 
 #include "i2c_if.h"
 
-struct i2c_lm75 {
+struct lm75 {
 	struct i2c_if *i2c;
 	uint8_t address;	/* 7 bit i2c address, << 1 */
 #if 0
@@ -15,11 +15,11 @@ struct i2c_lm75 {
 #endif
 };
 
-int i2c_lm75_init(struct i2c_lm75 *lm75, struct i2c_if *i2c, uint8_t address);
+int lm75_init(struct lm75 *lm75, struct i2c_if *i2c, uint8_t address);
 
-int i2c_lm75_read(struct i2c_lm75 *lm75, int *out_val_mdeg);
+int lm75_read(struct lm75 *lm75, int *out_val_mdeg);
 
-int i2c_lm75_test(struct i2c_if *i2c);
+int lm75_test(struct i2c_if *i2c);
 
 
 #endif

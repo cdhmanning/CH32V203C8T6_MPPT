@@ -4,8 +4,12 @@
  */
 #include "hw_map.h"
 
-#include <critical.h>
+#include "critical.h"
 
+#include "i2c_device/at24c256.h"
+#include "i2c_device/ina226.h"
+#include "i2c_device/lm75.h"
+#include "i2c_device/mcp4725.h"
 #include "pwm_controller.h"
 #include "hc595.h"
 #include "hc595_lcd.h"
@@ -15,12 +19,6 @@
 #include "delay_ms.h"
 
 #include "i2c_if.h"
-#include "i2c_lm75.h"
-#include "i2c_at24c256.h"
-#include "i2c_mcp4725.h"
-#include "i2c_ina226.h"
-
-
 
 #include "main.h"
 
@@ -132,15 +130,15 @@ int main(void)
     IIC_Init(400000, 0x12);
 
     i2c_if_init(&i2c_if1, I2C1);
-    i2c_if_scan_bus(&i2c_if1);
+    //i2c_if_scan_bus(&i2c_if1);
 
-    i2c_ina226_test(&i2c_if1);
+    ina226_test(&i2c_if1);
     while(1) {}
 
-    i2c_mcp4725_test(&i2c_if1);
-    //i2c_at24c256_test(&i2c_if1);
+    mcp4725_test(&i2c_if1);
+    //at24c256_test(&i2c_if1);
 
-    //i2c_lm75_test(&i2c_if1);
+    //lm75_test(&i2c_if1);
 
     hc595_init(0x55);
 
