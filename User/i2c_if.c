@@ -87,8 +87,11 @@ int i2c_if_transact(struct i2c_if *i2c,
 		i2c->ext_buffer_loaded = 0;
 
 		got_to |= 1;
-		if (!i2c->have_bus)
-			ret = wait_flag(i2c, I2C_FLAG_BUSY, 0);
+		if (!i2c->have_bus) {
+	        GPIO_WriteBit(LED0_IO, 1);
+			//ret = wait_flag(i2c, I2C_FLAG_BUSY, 0);
+	        GPIO_WriteBit(LED0_IO, 0);
+		}
 
 		if (ret < 0)
 			goto fail;
@@ -125,10 +128,8 @@ int i2c_if_transact(struct i2c_if *i2c,
 			while(i2c->n_bytes > 0) {
 
 				if(i2c->n_bytes == 1) {
-			        GPIO_WriteBit(LED0_IO, 1);
 					//I2C_AcknowledgeConfig(i2c->interface, DISABLE );
 					I2C_GenerateSTOP(i2c->interface, ENABLE );
-			        GPIO_WriteBit(LED0_IO, 0);
 					i2c->stop_sent = 1;
 					i2c->have_bus = 0;
 					//delay_ms(2);

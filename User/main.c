@@ -13,6 +13,7 @@
 #include "pwm_controller.h"
 #include "hc595.h"
 #include "hc595_lcd.h"
+#include "ds18b20.h"
 
 #include "core_riscv.h"
 #include "ch32v20x_gpio.h"
@@ -130,12 +131,15 @@ int main(void)
     IIC_Init(400000, 0x12);
 
     i2c_if_init(&i2c_if1, I2C1);
-    //i2c_if_scan_bus(&i2c_if1);
+    i2c_if_scan_bus(&i2c_if1);
 
-    ina226_test(&i2c_if1);
+    ds18b20_init();
+    ds18b20_test();
+
     while(1) {}
 
-    mcp4725_test(&i2c_if1);
+    //ina226_test(&i2c_if1);
+    //mcp4725_test(&i2c_if1);
     //at24c256_test(&i2c_if1);
 
     //lm75_test(&i2c_if1);

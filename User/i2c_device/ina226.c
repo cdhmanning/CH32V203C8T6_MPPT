@@ -7,6 +7,15 @@
 
 #define mA_SHIFT	10
 
+#define N_BACKGROUND_MSG 8
+static struct {
+	struct i2c_if *i2c;
+	struct i2c_msg msg[N_BACKGROUND_MSG];
+	int n_msg;
+	uint8_t reg_busV;
+	uint8_t reg_shuntV;
+} background_processing;
+
 static int ina226_read_reg(struct ina226 *ina226,
 							   uint32_t reg,
 							   uint32_t *out_value)
@@ -44,7 +53,8 @@ static int calc_shunt_multiplier(struct ina226 *ina226, int shunt_uOhm)
 
 int ina226_init(struct ina226 *ina226,
 					struct i2c_if *i2c, uint8_t address,
-					int shunt_uOhm)
+					int shunt_uOhm,
+					char *name)
 {
 	int ret = 0;
 	uint16_t cfg_value;
@@ -52,6 +62,8 @@ int ina226_init(struct ina226 *ina226,
 	memset(ina226, 0, sizeof(*ina226));
 	ina226->i2c = i2c;
 	ina226->address = address;
+	ina226->name = strdup(name);
+
 	calc_shunt_multiplier(ina226, shunt_uOhm);
 
 	/*
@@ -144,66 +156,84 @@ int ina226_read_mA(struct ina226 *ina226, int *out_mA)
 	return ret;
 }
 
-static void ina226_msg_cfg(struct i2c_msg *m,
-				uint8_t addr, uint8_t *reg_buf, uint8_t *buffer)
+void ina226_update_values(struct ina226 *ina226)
 {
-	m->dest_addr7 = addr;
+	uint16_t u16_shuntV;
+	uint16_t u16_busV;
+
+	u16_shuntV = ina226->shuntV_bytes[0] << 8 | ina226->shuntV_bytes[1];
+	u16_busV = ina226->busV_bytes[0] << 8 | ina226->busV_bytes[1];
+	ina226->mA = u16_to_mA(ina226, u16_shuntV);
+	ina226->mV = u16_to_mV(ina226, u16_busV);
+}
+
+void ina226_print_values(struct ina226 *ina226)
+{
+	printf("%s  %dmA %dmV\n", ina226->name, ina226->mA, ina226->mV);
+}
+
+static void ina226_msg_cfg(int msg_pos, struct ina226 *ina226)
+{
+	struct i2c_msg *m = & background_processing.msg[msg_pos];
+
+	m->dest_addr7 = ina226->address;
 	m->flags = I2C_MSG_FLAG_WRITE | I2C_MSG_FLAG_NO_STOP;
-	m->buffer = reg_buf;
+	m->buffer = &background_processing.reg_shuntV;
 	m->buffer_length = 1;
 	m++;
 
-	m->dest_addr7 = addr;
+	m->dest_addr7 = ina226->address;
 	m->flags = I2C_MSG_FLAG_READ;
-	m->buffer = buffer;
+	m->buffer = ina226->shuntV_bytes;
 	m->buffer_length = 2;
 	m++;
+
+	m->dest_addr7 = ina226->address;
+	m->flags = I2C_MSG_FLAG_WRITE | I2C_MSG_FLAG_NO_STOP;
+	m->buffer = &background_processing.reg_busV;
+	m->buffer_length = 1;
+	m++;
+
+	m->dest_addr7 = ina226->address;
+	m->flags = I2C_MSG_FLAG_READ;
+	m->buffer = ina226->busV_bytes;
+	m->buffer_length = 2;
+	m++;
+
 }
 
-int ina226_quick_read(struct i2c_if *i2c,
-						struct ina226 *ina226_0,
-						struct ina226 *ina226_1)
+int ina226_quick_read_init(struct ina226 *ina226_0,
+						   struct ina226 *ina226_1)
 {
-	uint8_t mA_buffer0[2];
-	uint8_t mV_buffer0[2];
-	uint8_t mA_buffer1[2];
-	uint8_t mV_buffer1[2];
-	uint8_t reg_buf0[1];
-	uint8_t reg_buf1[1];
-	struct i2c_msg msg[8];
+	memset(&background_processing, 0, sizeof(background_processing));
+
+	background_processing.i2c = ina226_0->i2c;
+
+	background_processing.reg_busV = INA226_REG_BUSV;
+	background_processing.reg_shuntV = INA226_REG_SHUNTV;
+
+	ina226_msg_cfg(0, ina226_0);
+	ina226_msg_cfg(4, ina226_1);
+
+	background_processing.n_msg = 8;
+
+	return 0;
+}
+
+int ina226_perform_quick_read(struct ina226 *ina226_0,
+		   	   	   	   	      struct ina226 *ina226_1)
+{
 	int ret;
-	uint8_t addr0 = 0x80;
-	uint8_t addr1 = 0x88;
 
-	memset(msg, 0, sizeof(msg));
-	memset(mA_buffer0, 0, sizeof(mA_buffer0));
-	memset(mV_buffer0, 0, sizeof(mV_buffer0));
-	memset(mA_buffer1, 0, sizeof(mA_buffer1));
-	memset(mV_buffer1, 0, sizeof(mV_buffer1));
+	ret = i2c_if_transact(background_processing.i2c,
+						  background_processing.msg,
+						  background_processing.n_msg);
 
-	reg_buf0[0] = 1;
-	reg_buf1[0] = 2;
-
-	ina226_msg_cfg(&msg[0], addr0, reg_buf0, mA_buffer0);
-	ina226_msg_cfg(&msg[2], addr0, reg_buf1, mV_buffer0);
-
-	ina226_msg_cfg(&msg[4], addr1, reg_buf0, mA_buffer1);
-	ina226_msg_cfg(&msg[6], addr1, reg_buf1, mV_buffer1);
-
-	ret = i2c_if_transact(i2c, msg, 8);
-
-	if (ret >= 0) {
-		printf("0 mV buffer %02x %02x mA buffer %02x %02x\n",
-					mV_buffer0[0], mV_buffer0[1], mA_buffer0[0], mA_buffer0[1]);
-		printf("1 mV buffer %02x %02x mA buffer %02x %02x\n",
-							mV_buffer1[0], mV_buffer1[1], mA_buffer1[0], mA_buffer1[1]);
-
-		printf("0 mV %d mA %d\n",
-				u16_to_mV(ina226_0, mV_buffer0[0] << 8 | mV_buffer0[1]),
-				u16_to_mA(ina226_0, mA_buffer0[0] << 8 | mA_buffer0[1]));
-		printf("1 mV %d mA %d\n",
-				u16_to_mV(ina226_1, mV_buffer1[0] << 8 | mV_buffer1[1]),
-				u16_to_mA(ina226_1, mA_buffer1[0] << 8 | mA_buffer1[1]));
+	if (ret > 0) {
+		ina226_update_values(ina226_0);
+		ina226_update_values(ina226_1);
+		ina226_print_values(ina226_0);
+		ina226_print_values(ina226_1);
 	}
 
 	return ret;
@@ -215,40 +245,15 @@ int ina226_test(struct i2c_if *i2c)
 	struct ina226 ina226_0;
 	struct ina226 ina226_1;
 	int ret;
-	int i;
-	int mV_0;
-	int mA_0;
-	int mW_0;
-	int mV_1;
-	int mA_1;
-	int mW_1;
 
-	ret = ina226_init(&ina226_0, i2c, 0x80, 100000);
-	ret = ina226_init(&ina226_1, i2c, 0x88, 100000);
+
+	ret = ina226_init(&ina226_0, i2c, 0x80, 100000, "Main battery");
+	ret = ina226_init(&ina226_1, i2c, 0x88, 100000, "Secondary battery");
 
 	printf("ina226 init returned %d\n", ret);
 
-	ina226_quick_read(i2c, &ina226_0, &ina226_1);
-
-	for(i = 0; i < 0; i++) {
-		ret = ina226_read_mV(&ina226_0, &mV_0);
-		ret = ina226_read_mA(&ina226_1, &mA_0);
-		mW_0 = mV_0 * mA_0 /1000;
-		ret = ina226_read_mV(&ina226_0, &mV_1);
-		ret = ina226_read_mA(&ina226_1, &mA_1);
-		mW_1 = mV_1 * mA_1 /1000;
-
-		printf("ina226 read_mV0 ret %d, %d mV\n", ret, mV_0);
-		printf("ina226 read_mA0 ret %d, %d mA\n", ret, mA_0);
-		printf("Power %d mW0\n", mW_0);
-
-		printf("ina226 read_mV1 ret %d, %d mV\n", ret, mV_1);
-		printf("ina226 read_mA1 ret %d, %d mA\n", ret, mA_1);
-		printf("Power %d mW1\n", mW_1);
-		delay_ms(10);
-		//ret = ina226_read(&bad, &temp_mdeg);
-		//printf("Bad ina226 read ret %d, %d mdegrees\n", ret, temp_mdeg);
-	}
+	ina226_quick_read_init(&ina226_0, &ina226_1);
+	ina226_perform_quick_read(&ina226_0, &ina226_1);
 
 	return ret;
 }
