@@ -1,8 +1,9 @@
 #include "i2c_device/mcp4725.h"
 #include <string.h>
+#include <stdio.h>
 
 
-int mcp4725_init(struct mcp4725 *dev, struct i2c_if *i2c, uint8_t address)
+int mcp4725_init(struct mcp4725 *dev, struct i2c_bus *i2c, uint8_t address)
 {
 	memset(dev, 0, sizeof(*dev));
 	dev->i2c = i2c;
@@ -19,7 +20,7 @@ static int mcp4725_set_fast(struct mcp4725 *dev, uint16_t dac_val,
 	value = (((uint32_t)pd) & 3) <<  12;
 	value |= (dac_val & 0xFFF);
 
-	ret = i2c_if_write_reg(dev->i2c, dev->address, 0, 0, value, 2);
+	ret = i2c_write_reg(dev->i2c, dev->address, 0, 0, value, 2);
 	//ret = i2c_if_write_reg(dev->i2c, dev->address, value >> 8, 1, value, 1);
 
 	return ret;
@@ -38,7 +39,7 @@ int mcp4725_set(struct mcp4725 *dev, uint16_t dac_val,
 	value |= (((uint32_t)pd) & 3) <<  17;
 	value |= (dac_val & 0xFFF) << 4;
 
-	ret = i2c_if_write_reg(dev->i2c, dev->address, 0, 0, value, 3);
+	ret = i2c_write_reg(dev->i2c, dev->address, 0, 0, value, 3);
 
 	return ret;
 }
@@ -55,7 +56,7 @@ int mcp4725_read(struct mcp4725 *dev, struct mcp4725_result *result)
 		result->ready = 0;
 	}
 
-	ret  = i2c_if_read_reg(dev->i2c, dev->address, 0, 0, &value, 3);
+	ret  = i2c_read_reg(dev->i2c, dev->address, 0, 0, &value, 3);
 
 	if (ret < 0)
 		return ret;
@@ -70,7 +71,7 @@ int mcp4725_read(struct mcp4725 *dev, struct mcp4725_result *result)
 	return ret;
 }
 
-int mcp4725_test(struct i2c_if *i2c)
+int mcp4725_test(struct i2c_bus *i2c)
 {
 	struct mcp4725 dev;
 	int ret;

@@ -3,10 +3,11 @@
 #include "i2c_device/at24c256.h"
 #include "delay_ms.h"
 
+#include <stdio.h>
 #include <string.h>
 
 
-int at24c256_init(struct at24c256 *dev, struct i2c_if *i2c, uint8_t address)
+int at24c256_init(struct at24c256 *dev, struct i2c_bus *i2c, uint8_t address)
 {
 	memset(dev, 0, sizeof(*dev));
 	dev->i2c = i2c;
@@ -34,7 +35,7 @@ int at24c256_write_buffer(struct at24c256 *dev, uint32_t address,
 			this_write = n_bytes;
 		left = n_bytes - this_write;
 		//printf("Write 0x%02x bytes at 0x%04lx, %d left\n", this_write, address, left);
-		ret = i2c_if_write_reg_buffer(dev->i2c, dev->address,
+		ret = i2c_write_reg_buffer(dev->i2c, dev->address,
 									  address, 2,
 									  buffer, this_write);
 		// TODO: handle ret.
@@ -51,7 +52,7 @@ int at24c256_read_buffer(struct at24c256 *dev, uint32_t address,
 							uint8_t *buffer, int n_bytes)
 {
 
-	return i2c_if_write_reg_buffer(dev->i2c, dev->address,
+	return i2c_write_reg_buffer(dev->i2c, dev->address,
 									  address, 2,
 									  buffer, n_bytes);
 }
@@ -65,7 +66,7 @@ void dump_buffer(uint8_t *buffer, int size)
 	}
 }
 
-int at24c256_test(struct i2c_if *i2c)
+int at24c256_test(struct i2c_bus *i2c)
 {
 	struct at24c256 dev;
 	int ret;
@@ -86,19 +87,19 @@ int at24c256_test(struct i2c_if *i2c)
 	addr = 30*1024 + 128 + 64;
 
 	for(i = 0; i < 10; i++) {
-		ret = i2c_if_read_reg_buffer(dev.i2c, dev.address, addr,2, rb, 16);
+		ret = i2c_read_reg_buffer(dev.i2c, dev.address, addr,2, rb, 16);
 
 		printf("24c256 read ret %d, ", ret);
 		dump_buffer(rb, 16);
 		printf("\n");
 
-		ret = i2c_if_write_reg_buffer(dev.i2c, dev.address, addr,2, wb, 16);
+		ret = i2c_write_reg_buffer(dev.i2c, dev.address, addr,2, wb, 16);
 
 		printf("24c256 write ret %d\n", ret);
 
 		delay_ms(20);
 
-		ret = i2c_if_read_reg_buffer(dev.i2c, dev.address, addr,2, rb, 16);
+		ret = i2c_read_reg_buffer(dev.i2c, dev.address, addr,2, rb, 16);
 
 		printf("24c256 read ret %d, ", ret);
 		dump_buffer(rb, 16);
@@ -108,7 +109,7 @@ int at24c256_test(struct i2c_if *i2c)
 
 	for(i = 0; i < 1024; i++) {
 		printf("%04x:", i * 32);
-		ret = i2c_if_read_reg_buffer(dev.i2c, dev.address, i * 32,2, rb, 32);
+		ret = i2c_read_reg_buffer(dev.i2c, dev.address, i * 32,2, rb, 32);
 		dump_buffer(rb, 32);
 		printf("\n");
 	}

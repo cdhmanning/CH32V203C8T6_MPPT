@@ -131,10 +131,12 @@ int main(void)
     IIC_Init(400000, 0x12);
 
     i2c_if_init(&i2c_if1, I2C1);
-    i2c_if_scan_bus(&i2c_if1);
 
-    ds18b20_init();
-    ds18b20_test();
+    i2c_scan_bus(&i2c_if1.bus);
+    ina226_test(&i2c_if1.bus);
+
+    //ds18b20_init();
+    //ds18b20_test();
 
     while(1) {}
 

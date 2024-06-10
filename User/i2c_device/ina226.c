@@ -2,6 +2,7 @@
 
 #include "i2c_device/ina226.h"
 #include <string.h>
+#include <stdio.h>
 
 #include "delay_ms.h"
 
@@ -9,7 +10,7 @@
 
 #define N_BACKGROUND_MSG 8
 static struct {
-	struct i2c_if *i2c;
+	struct i2c_bus *i2c;
 	struct i2c_msg msg[N_BACKGROUND_MSG];
 	int n_msg;
 	uint8_t reg_busV;
@@ -20,14 +21,14 @@ static int ina226_read_reg(struct ina226 *ina226,
 							   uint32_t reg,
 							   uint32_t *out_value)
 {
-	return i2c_if_read_reg(ina226->i2c, ina226->address, reg, 1, out_value, 2);
+	return i2c_read_reg(ina226->i2c, ina226->address, reg, 1, out_value, 2);
 }
 
 static int ina226_write_reg(struct ina226 *ina226,
 								uint32_t reg,
 								uint16_t out_value)
 {
-	return i2c_if_write_reg(ina226->i2c, ina226->address, reg, 1, out_value, 2);
+	return i2c_write_reg(ina226->i2c, ina226->address, reg, 1, out_value, 2);
 }
 
 /*
@@ -52,7 +53,7 @@ static int calc_shunt_multiplier(struct ina226 *ina226, int shunt_uOhm)
 }
 
 int ina226_init(struct ina226 *ina226,
-					struct i2c_if *i2c, uint8_t address,
+					struct i2c_bus *i2c, uint8_t address,
 					int shunt_uOhm,
 					char *name)
 {
@@ -225,9 +226,9 @@ int ina226_perform_quick_read(struct ina226 *ina226_0,
 {
 	int ret;
 
-	ret = i2c_if_transact(background_processing.i2c,
-						  background_processing.msg,
-						  background_processing.n_msg);
+	ret = i2c_transact(background_processing.i2c,
+					   background_processing.msg,
+					   background_processing.n_msg);
 
 	if (ret > 0) {
 		ina226_update_values(ina226_0);
@@ -240,7 +241,7 @@ int ina226_perform_quick_read(struct ina226 *ina226_0,
 
 }
 
-int ina226_test(struct i2c_if *i2c)
+int ina226_test(struct i2c_bus *i2c)
 {
 	struct ina226 ina226_0;
 	struct ina226 ina226_1;

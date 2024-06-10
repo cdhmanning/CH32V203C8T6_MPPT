@@ -2,9 +2,10 @@
 
 #include "i2c_device/lm75.h"
 #include <string.h>
+#include <stdio.h>
 
 
-int lm75_init(struct lm75 *lm75, struct i2c_if *i2c, uint8_t address)
+int lm75_init(struct lm75 *lm75, struct i2c_bus *i2c, uint8_t address)
 {
 	memset(lm75, 0, sizeof(*lm75));
 	lm75->i2c = i2c;
@@ -78,7 +79,7 @@ int lm75_read(struct lm75 *lm75, int *out_val_mdeg)
 	if (out_val_mdeg)
 		*out_val_mdeg = -1;
 
-	ret  = i2c_if_read_reg(lm75->i2c, lm75->address, 0, 1, &utemp, 2);
+	ret  = i2c_read_reg(lm75->i2c, lm75->address, 0, 1, &utemp, 2);
 
 	temp = (int16_t) utemp;
 	temp >>= 7;
@@ -95,7 +96,7 @@ int lm75_read(struct lm75 *lm75, int *out_val_mdeg)
 #endif
 
 
-int lm75_test(struct i2c_if *i2c)
+int lm75_test(struct i2c_bus *i2c)
 {
 	struct lm75 lm75;
 	struct lm75 bad;
