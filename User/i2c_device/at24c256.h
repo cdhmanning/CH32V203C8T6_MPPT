@@ -6,7 +6,7 @@
 #ifndef _USER_I2C_AT24C256_H_
 #define _USER_I2C_AT24C2565_H_
 
-#include "i2c_bus.h"
+#include <i2c_bus/i2c_bus.h>
 
 struct at24c256 {
 	struct i2c_bus *i2c;

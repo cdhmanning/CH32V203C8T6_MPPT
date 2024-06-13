@@ -5,8 +5,7 @@
 #ifndef _USER_I2C_IF_H_
 #define _USER_I2C_IF_H_
 
-#include "i2c_bus.h"
-
+#include <i2c_bus/i2c_bus.h>
 #include "ch32v20x.h"
 #include <stdint.h>
 

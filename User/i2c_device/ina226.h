@@ -2,7 +2,7 @@
 #ifndef _USER_I2C_INA226_H_
 #define _USER_I2C_INA226_H_
 
-#include "i2c_bus.h"
+#include <i2c_bus/i2c_bus.h>
 
 
 #define INA226_REG_CONFIG 	0x00

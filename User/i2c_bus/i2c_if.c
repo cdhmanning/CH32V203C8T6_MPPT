@@ -5,9 +5,8 @@
  * detecting if the device is not present/ready.
  */
 
-#include "i2c_if.h"
-#include "i2c_bus.h"
-
+#include <i2c_bus/i2c_bus.h>
+#include <i2c_bus/i2c_if.h>
 #include "hw_map.h"
 
 #include <stddef.h>
@@ -237,6 +236,10 @@ fail:
 
 /* Check bus by sending out a read address and
  * seeing if there is an ACK.
+ * Returns:
+ * 		 1: Device acked
+ * 		 0: Device did not ACK.
+ * 	    -1: Something else failed.
  */
 #if 1
 int i2c_if_check(struct i2c_bus *i2c_bus, uint8_t addr)

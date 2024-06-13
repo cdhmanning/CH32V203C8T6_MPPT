@@ -2,6 +2,8 @@
 /*
  * Note: This include must be first.
  */
+#include <i2c_bus/i2c_if.h>
+#include <i2c_bus/i2c_bus_gpio.h>
 #include "hw_map.h"
 
 #include "critical.h"
@@ -18,8 +20,6 @@
 #include "core_riscv.h"
 #include "ch32v20x_gpio.h"
 #include "delay_ms.h"
-
-#include "i2c_if.h"
 
 #include "main.h"
 
@@ -110,6 +110,7 @@ void main_poll(void)
 }
 
 struct i2c_if i2c_if1;
+struct i2c_bus_gpio i2c_gpio;
 
 int main(void)
 {
@@ -129,12 +130,16 @@ int main(void)
     printf( "ChipID:%08lx\r\n", DBGMCU_GetCHIPID() );
 
     IIC_Init(400000, 0x12);
-
+#if 0
     i2c_if_init(&i2c_if1, I2C1);
 
     i2c_scan_bus(&i2c_if1.bus);
     ina226_test(&i2c_if1.bus);
+#endif
+    i2c_bus_gpio_init(&i2c_gpio, GPIOA, 1 << 10, GPIOA, 1 << 9);
 
+    //i2c_scan_bus(&i2c_gpio.bus);
+    ina226_test(&i2c_gpio.bus);
     //ds18b20_init();
     //ds18b20_test();
 

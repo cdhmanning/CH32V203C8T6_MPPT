@@ -2,7 +2,7 @@
 #ifndef _USER_I2C_MCP4725_H_
 #define _USER_I2C_MCP4725_H_
 
-#include "i2c_bus.h"
+#include <i2c_bus/i2c_bus.h>
 
 struct mcp4725 {
 	struct i2c_bus *i2c;

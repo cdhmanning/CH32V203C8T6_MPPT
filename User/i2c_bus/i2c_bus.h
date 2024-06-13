@@ -2,8 +2,8 @@
  * General "class" for an i2c bus.
  */
 
-#ifndef USER_I2C_BUS_H_
-#define USER_I2C_BUS_H_
+#ifndef USER_I2C_BUS_I2C_BUS_H_
+#define USER_I2C_BUS_I2C_BUS_H_
 
 #include <stdint.h>
 

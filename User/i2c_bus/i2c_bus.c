@@ -1,5 +1,4 @@
-#include "i2c_bus.h"
-
+#include <i2c_bus/i2c_bus.h>
 #include <string.h>
 #include <stdio.h>
 
