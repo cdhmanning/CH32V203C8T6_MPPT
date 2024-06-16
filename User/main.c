@@ -2,8 +2,10 @@
 /*
  * Note: This include must be first.
  */
+#include <hd44780.h>
 #include <i2c_bus/i2c_if.h>
 #include <i2c_bus/i2c_bus_gpio.h>
+#include <i2c_device/hd44780_if_i2c.h>
 #include "hw_map.h"
 
 #include "critical.h"
@@ -13,8 +15,6 @@
 #include "i2c_device/lm75.h"
 #include "i2c_device/mcp4725.h"
 #include "pwm_controller.h"
-#include "hc595.h"
-#include "hc595_lcd.h"
 #include "ds18b20.h"
 
 #include "core_riscv.h"
@@ -26,8 +26,8 @@
 #include "debug.h"
 
 
-static struct hc595_lcd __lcd;
-struct hc595_lcd *lcd = &__lcd;
+static struct hd44780_interface_i2c  __lcd_interface_i2c;
+static struct hd44780 __lcd;
 
 void peripheral_clock_init(void)
 {
@@ -101,7 +101,6 @@ void main_poll(void)
 
     pwm_val = ( loop_counter & 1) ? (2048 * 9000)/75000 : (2048 * 14500)/15000;
     update_pwm(pwm_val);
-    hc595_out(loop_counter);
     loop_counter++;
 
 	if (loop_counter & 7)
@@ -129,21 +128,18 @@ int main(void)
 		   SystemCoreClock, DEBUG_UART_ID, DEBUG_UART_BAUD);
     printf( "ChipID:%08lx\r\n", DBGMCU_GetCHIPID() );
 
-    IIC_Init(400000, 0x12);
-#if 0
+    IIC_Init(100000, 0x12);
     i2c_if_init(&i2c_if1, I2C1);
 
-    i2c_scan_bus(&i2c_if1.bus);
-    ina226_test(&i2c_if1.bus);
-#endif
-    i2c_bus_gpio_init(&i2c_gpio, GPIOA, 1 << 10, GPIOA, 1 << 9);
+    //i2c_scan_bus(&i2c_if1.bus);
+    //ina226_test(&i2c_if1.bus);
+    //i2c_bus_gpio_init(&i2c_gpio, GPIOA, 1 << 10, GPIOA, 1 << 9);
 
     //i2c_scan_bus(&i2c_gpio.bus);
-    ina226_test(&i2c_gpio.bus);
+    //ina226_test(&i2c_gpio.bus);
     //ds18b20_init();
     //ds18b20_test();
 
-    while(1) {}
 
     //ina226_test(&i2c_if1);
     //mcp4725_test(&i2c_if1);
@@ -151,9 +147,20 @@ int main(void)
 
     //lm75_test(&i2c_if1);
 
-    hc595_init(0x55);
+    hd44780_interface_i2c_init(&__lcd_interface_i2c,
+    			//&i2c_gpio.bus,
+				&i2c_if1.bus,
+    			0x27 <<1);
 
-    HD44780_Init(lcd, 4);
+    hd44780_init(&__lcd, &__lcd_interface_i2c.interface, 4);
+    hd44780_test(&__lcd);
+
+    while(1) {
+    	delay_ms(500);
+    	//hd44780_SetBacklight(&__lcd, 0);
+    	delay_ms(500);
+    	hd44780_SetBacklight(&__lcd, 1);
+    }
 
    // lcd_test(lcd);
 

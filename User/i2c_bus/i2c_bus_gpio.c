@@ -11,9 +11,6 @@
 #include <string.h>
 #include "delay_ms.h"
 
-
-#define timed_out(start) ((get_tick() - (start)) > 2)
-
 #define SDA_IO(x)	x->sda_port, x->sda_pin
 #define SCL_IO(x)	x->scl_port, x->scl_pin
 
@@ -21,7 +18,7 @@ static void do_delay(void)
 {
 	volatile int x;
 
-	for (x = 0; x < 50; x++) {
+	for (x = 0; x < 500; x++) {
 		/* Spin. */
 	}
 }
