@@ -18,7 +18,7 @@ static void do_delay(void)
 {
 	volatile int x;
 
-	for (x = 0; x < 500; x++) {
+	for (x = 0; x < 20; x++) {
 		/* Spin. */
 	}
 }

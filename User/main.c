@@ -133,9 +133,9 @@ int main(void)
 
     //i2c_scan_bus(&i2c_if1.bus);
     //ina226_test(&i2c_if1.bus);
-    //i2c_bus_gpio_init(&i2c_gpio, GPIOA, 1 << 10, GPIOA, 1 << 9);
+    i2c_bus_gpio_init(&i2c_gpio, GPIOA, 1 << 10, GPIOA, 1 << 9);
 
-    //i2c_scan_bus(&i2c_gpio.bus);
+    i2c_scan_bus(&i2c_gpio.bus);
     //ina226_test(&i2c_gpio.bus);
     //ds18b20_init();
     //ds18b20_test();
@@ -148,8 +148,8 @@ int main(void)
     //lm75_test(&i2c_if1);
 
     hd44780_interface_i2c_init(&__lcd_interface_i2c,
-    			//&i2c_gpio.bus,
-				&i2c_if1.bus,
+    			&i2c_gpio.bus,
+				//&i2c_if1.bus,
     			0x27 <<1);
 
     hd44780_init(&__lcd, &__lcd_interface_i2c.interface, 4);

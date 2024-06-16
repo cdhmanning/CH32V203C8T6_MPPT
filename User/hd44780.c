@@ -7,6 +7,7 @@
 
 #include "hd44780.h"
 #include "delay_ms.h"
+#include <stdio.h>
 
 /*
  * Shift register field usage:
@@ -138,11 +139,13 @@ void hd44780_init(struct hd44780 *lcd, struct hd44780_interface *interface, uint
 	/* Should wait 50msec from power up. */
 	lcd_delay(50);
 
-	/* 4bit Mode.  3x 0x03, then 0x02*/
+	/* 4bit Mode.  3x 0x03, then 0x02.
+	 * Some delays are needed here.
+	 */
 	Write4Bits(lcd, 0x03 << 4); lcd_delay(5);
-	Write4Bits(lcd, 0x03 << 4); lcd_delay(5);
-	Write4Bits(lcd, 0x03 << 4); lcd_delay(5);
-	Write4Bits(lcd, 0x02 << 4); lcd_delay(5);
+	Write4Bits(lcd, 0x03 << 4); lcd_delay(2);
+	Write4Bits(lcd, 0x03 << 4); lcd_delay(2);
+	Write4Bits(lcd, 0x02 << 4); lcd_delay(2);
 
 	/* Display Control */
 	SendCommand(lcd, LCD_FUNCTIONSET | lcd->function);
@@ -170,7 +173,7 @@ void hd44780_Clear(struct hd44780 *lcd)
 void hd44780_Home(struct hd44780 *lcd)
 {
   SendCommand(lcd, LCD_RETURNHOME);
-  lcd_delay(2);
+  lcd_delay(3);
 }
 
 void hd44780_SetCursor(struct hd44780 *lcd, uint8_t col, uint8_t row)
@@ -295,8 +298,7 @@ static void Send(struct hd44780 *lcd, uint8_t value, uint8_t mode)
 
 static void Write4Bits(struct hd44780 *lcd, uint8_t value)
 {
-  ExpanderWrite(lcd, value);
-  lcd_delay(1);
+  //ExpanderWrite(lcd, value);
   PulseEnable(lcd, value);
 }
 
@@ -310,60 +312,61 @@ static void ExpanderWrite(struct hd44780 *lcd, uint8_t _data)
 static void PulseEnable(struct hd44780 *lcd, uint8_t _data)
 {
   ExpanderWrite(lcd, _data | ENABLE);
-  lcd_delay(1);
   ExpanderWrite(lcd, _data & ~ENABLE);
-  lcd_delay(1);
 }
 
 
 void hd44780_test(struct hd44780 *lcd)
 {
-	  hd44780_SetBacklight(lcd, 1);
-	  /* Clear buffer */
-	  hd44780_Clear(lcd);
+	uint32_t start;
 
-	  /* Hide characters */
-	  hd44780_SetDisplayVisible(lcd, 0);
-	  hd44780_SetCursorVisible(lcd, 1);
-	  hd44780_SetCursor(lcd, 0,0);
-	  hd44780_PrintStr(lcd, "HELLO Micro!!!");
-	  hd44780_PrintSpecialChar(lcd, 0);
+	hd44780_SetBacklight(lcd, 1);
+	/* Clear buffer */
+	hd44780_Clear(lcd);
 
-	  /* Show characters */
-	  hd44780_SetDisplayVisible(lcd, 1);
+	/* Hide characters */
+	hd44780_SetDisplayVisible(lcd, 0);
+	hd44780_SetCursorVisible(lcd, 1);
+	hd44780_SetCursor(lcd, 0,0);
+	hd44780_PrintStr(lcd, "HELLO Micro!!!");
+	hd44780_PrintSpecialChar(lcd, 0);
 
-	  /* Move position */
-	  hd44780_SetCursor(lcd, 0, 1);
-	  hd44780_PrintStr(lcd, "Line 1");
-	  hd44780_PrintSpecialChar(lcd, 1);
-	  hd44780_SetCursor(lcd, 0, 2);
-	  hd44780_PrintStr(lcd, "Line 2");
+	/* Show characters */
+	hd44780_SetDisplayVisible(lcd, 1);
 
-	  hd44780_SetCursor(lcd, 0, 3);
-	  hd44780_PrintStr(lcd, "Line 3-8901234567890");
-	  /* Blink cursor */
-	  hd44780_SetBlink(lcd,1);
-	  hd44780_SetBlink(lcd, 0);
-	  hd44780_SetCursorVisible(lcd, 1);
-	  hd44780_SetCursorVisible(lcd, 0);
-	  hd44780_SetBacklight(lcd,0);
-	  hd44780_SetBacklight(lcd, 1);
+	/* Move position */
+	hd44780_SetCursor(lcd, 0, 1);
+	hd44780_PrintStr(lcd, "Line 1");
+	hd44780_PrintSpecialChar(lcd, 1);
+	hd44780_SetCursor(lcd, 0, 2);
+	hd44780_PrintStr(lcd, "Line 2");
 
-	  hd44780_SetBlink(lcd,1);
-	  hd44780_SetCursorVisible(lcd, 1);
-	  hd44780_SetDisplayVisible(lcd, 1);
+	hd44780_SetCursor(lcd, 0, 3);
+	hd44780_PrintStr(lcd, "Line 3-8901234567890");
+	/* Blink cursor */
+	hd44780_SetBlink(lcd,1);
+	hd44780_SetBlink(lcd, 0);
+	hd44780_SetCursorVisible(lcd, 1);
+	hd44780_SetCursorVisible(lcd, 0);
+	hd44780_SetBacklight(lcd,0);
+	hd44780_SetBacklight(lcd, 1);
 
-	  lcd_delay(200);
+	lcd_delay(2000);
+	hd44780_Clear(lcd);
+	lcd_delay(2000);
 
-
-	  hd44780_SetCursor(lcd, 0, 0);
-	  hd44780_PrintStr(lcd, "Line 0-Hello on top!");
-	  hd44780_SetCursor(lcd, 0, 1);
-	  hd44780_PrintStr(lcd, "Line 1-ABCDEFGHIJKLM");
-	  hd44780_SetCursor(lcd, 0, 2);
-	  hd44780_PrintStr(lcd, "Line 2-NOPQRSTUVWXYZ");
-	  hd44780_SetCursor(lcd, 0, 3);
-	  hd44780_PrintStr(lcd, "Line 3-8901234567890");
+	start = get_tick();
+	hd44780_Clear(lcd);
+	hd44780_SetCursor(lcd, 0, 0);
+	hd44780_PrintStr(lcd, "Line 0-Hello on top!");
+	hd44780_SetCursor(lcd, 0, 1);
+	hd44780_PrintStr(lcd, "Line 1-ABCDEFGHIJKLM");
+	hd44780_SetCursor(lcd, 0, 2);
+	hd44780_PrintStr(lcd, "Line 2-NOPQRSTUVWXYZ");
+	hd44780_SetCursor(lcd, 0, 3);
+	hd44780_PrintStr(lcd, "Line 3-8901234567890");
+	printf("Clear and display whole screen took %d msec\n",
+			(int)(get_tick() - start));
 }
 
 
